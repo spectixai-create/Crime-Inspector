@@ -50,8 +50,6 @@ export function InterrogationRoom() {
   const assistantLoading = useGame((s) => s.assistantLoading);
   const assistantUsageCount = session.assistantUsageCount ?? 0;
 
-  const isDev = process.env.NODE_ENV === 'development';
-
   const [tooltipShown, setTooltipShown] = useState(false);
   const [evidenceFlash, setEvidenceFlash] = useState(false);
   const [pillFlash, setPillFlash] = useState(false);
@@ -224,15 +222,16 @@ export function InterrogationRoom() {
               תיק ראיות
             </Button>
 
-            {isDev && session.messages.length > 0 && (
+            {session.messages.length > 0 && (
               <Button
                 variant="ghost"
                 size="md"
                 onClick={handleDevReset}
                 style={{ borderStyle: 'dashed' }}
-                title="dev: אפס חקירה"
+                title="צא וחזור לבחירת תיק"
+                aria-label="אתחל את החקירה וחזור לבחירת תיק"
               >
-                אפס
+                ↻ אתחול
               </Button>
             )}
 

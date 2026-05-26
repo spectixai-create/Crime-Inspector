@@ -12,12 +12,19 @@ export function VerdictScreen() {
   const session = useGame((s) => s.session)!;
   const c = getCase(session.caseId);
   const submitVerdict = useGame((s) => s.submitVerdict);
+  const reset = useGame((s) => s.reset);
   const isLoading = useGame((s) => s.isLoading);
 
   const [decision, setDecision] = useState<'release' | 'charge' | null>(null);
   const [justification, setJustification] = useState('');
   const [cited, setCited] = useState<string[]>([]);
   const caseNum = c.id.replace('case-', '');
+
+  const handleAbort = () => {
+    if (window.confirm('לבטל את הגשת ההחלטה ולחזור לבחירת תיק? כל ההתקדמות תאבד.')) {
+      reset();
+    }
+  };
 
   const justOk = justification.trim().length >= MIN_JUSTIFICATION;
   const evidenceOk = decision === 'charge' ? cited.length >= 1 : true;
@@ -92,9 +99,29 @@ export function VerdictScreen() {
       }}
     >
       <div className="animate-fadeIn" style={{ width: '100%', maxWidth: 760 }}>
-        <p className="section-header" style={{ marginBottom: 'var(--space-2)' }}>
-          תיק {caseNum} — {c.title}
-        </p>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            marginBottom: 'var(--space-2)',
+          }}
+        >
+          <p className="section-header" style={{ margin: 0 }}>
+            תיק {caseNum} — {c.title}
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleAbort}
+            style={{ borderStyle: 'dashed' }}
+            title="חזרה לבחירת תיק (תאבד התקדמות)"
+            aria-label="בטל והחזר לבחירת תיק"
+          >
+            ↻ אתחול
+          </Button>
+        </div>
 
         <h1 className="t-display" style={{ margin: 0 }}>ההכרעה</h1>
 
