@@ -3,13 +3,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { getAudio } from '@/lib/audio';
 
-export function AudioControl() {
+interface AudioControlProps {
+  /**
+   * 'inline' (default) — renders in normal flow, fits next to other buttons.
+   * 'floating' — fixed-position bottom-right corner for screens without a chrome.
+   */
+  mode?: 'inline' | 'floating';
+}
+
+export function AudioControl({ mode = 'inline' }: AudioControlProps) {
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(0.6);
   const [sliderOpen, setSliderOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync with persisted state on mount (client only)
   useEffect(() => {
     const audio = getAudio();
     setMuted(audio.isMuted());
@@ -38,33 +45,46 @@ export function AudioControl() {
     closeTimer.current = setTimeout(() => setSliderOpen(false), 700);
   };
 
+  const wrapperStyle: React.CSSProperties =
+    mode === 'floating'
+      ? {
+          position: 'fixed',
+          // Visual bottom-right of viewport — avoids the top bar and chat input.
+          insetBlockEnd: 'var(--space-4)',
+          insetInlineEnd: 'var(--space-4)',
+          zIndex: 'var(--z-overlay)' as unknown as number,
+          display: 'inline-flex',
+          alignItems: 'center',
+        }
+      : {
+          position: 'relative',
+          display: 'inline-flex',
+          alignItems: 'center',
+        };
+
   return (
     <div
-      style={{
-        position: 'fixed',
-        // In RTL, left = visual right corner
-        top: '1rem',
-        left: '1rem',
-        zIndex: 50,
-        display: 'flex',
-        flexDirection: 'column-reverse',
-        alignItems: 'center',
-        gap: '0.5rem',
-      }}
+      style={wrapperStyle}
       onMouseEnter={openSlider}
       onMouseLeave={scheduleClose}
     >
-      {/* Volume slider — visible on hover */}
+      {/* Volume popover — opens BELOW the button so it never overlaps other chrome */}
       {sliderOpen && (
         <div
           style={{
+            position: 'absolute',
+            top: 'calc(100% + var(--space-2))',
+            insetInlineEnd: 0,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '0.25rem',
-            background: 'var(--bg-elev-2)',
-            border: '1px solid var(--border-subtle)',
-            padding: '0.6rem 0.5rem',
+            gap: 'var(--space-1)',
+            background: 'var(--color-surface-3)',
+            border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            padding: 'var(--space-3) var(--space-2)',
+            boxShadow: 'var(--shadow-card)',
+            zIndex: 'var(--z-overlay)' as unknown as number,
           }}
         >
           <input
@@ -79,19 +99,19 @@ export function AudioControl() {
               WebkitAppearance: 'slider-vertical',
               writingMode: 'vertical-lr',
               direction: 'rtl',
-              width: 28,
+              width: 24,
               height: 72,
               cursor: muted ? 'not-allowed' : 'pointer',
               opacity: muted ? 0.4 : 1,
-              accentColor: 'var(--gold)',
+              accentColor: 'var(--color-gold-primary)',
             }}
             aria-label="עוצמת שמע"
           />
           <span
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--fs-xs)',
-              color: 'var(--text-muted)',
+              fontSize: 'var(--text-caption-size)',
+              color: 'var(--color-text-muted)',
             }}
           >
             {Math.round(volume * 100)}
@@ -99,7 +119,7 @@ export function AudioControl() {
         </div>
       )}
 
-      {/* Mute toggle button */}
+      {/* Mute toggle button — same 40×40 round look, but no fixed position */}
       <button
         onClick={toggleMute}
         title={muted ? 'בטל השתקה' : 'השתק'}
@@ -107,27 +127,30 @@ export function AudioControl() {
         style={{
           width: 40,
           height: 40,
-          borderRadius: '50%',
-          background: 'var(--bg-elev)',
-          border: '1px solid var(--border-subtle)',
-          color: muted ? 'var(--text-faint)' : 'var(--text-secondary)',
+          borderRadius: 'var(--radius-pill)',
+          background: 'var(--color-surface-2)',
+          border: '1px solid var(--color-border-subtle)',
+          color: muted ? 'var(--color-text-faint)' : 'var(--color-text-secondary)',
           fontSize: '1.1rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          transition: 'border-color 0.15s, color 0.15s',
+          transition:
+            'border-color var(--motion-base) var(--motion-ease), color var(--motion-base) var(--motion-ease)',
           flexShrink: 0,
         }}
         onMouseEnter={(e) => {
           const b = e.currentTarget as HTMLButtonElement;
-          b.style.borderColor = 'var(--gold)';
-          b.style.color = 'var(--gold)';
+          b.style.borderColor = 'var(--color-gold-primary)';
+          b.style.color = 'var(--color-gold-primary)';
         }}
         onMouseLeave={(e) => {
           const b = e.currentTarget as HTMLButtonElement;
-          b.style.borderColor = 'var(--border-subtle)';
-          b.style.color = muted ? 'var(--text-faint)' : 'var(--text-secondary)';
+          b.style.borderColor = 'var(--color-border-subtle)';
+          b.style.color = muted
+            ? 'var(--color-text-faint)'
+            : 'var(--color-text-secondary)';
         }}
       >
         {muted ? '🔇' : '🔊'}

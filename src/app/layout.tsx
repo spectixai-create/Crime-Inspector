@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { AudioControl } from '@/components/AudioControl';
+// Note: AudioControl is mounted inline per-screen (CaseSelector header, InterrogationRoom TopBar)
+// so it sits next to other chrome buttons instead of overlapping them.
 
 export const metadata: Metadata = {
   title: 'חוקר פלילי — חקירה',
@@ -28,10 +29,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>
-        <AudioControl />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

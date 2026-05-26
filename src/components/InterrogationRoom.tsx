@@ -9,6 +9,7 @@ import { EvidenceDrawer } from './EvidenceDrawer';
 import { EvidenceLightbox } from './EvidenceLightbox';
 import { AssistantPanel } from './AssistantPanel';
 import { TopBar, TopBarCaseIdentity, TopBarMessagesCounter } from './TopBar';
+import { AudioControl } from './AudioControl';
 import { Badge, Button, InputGroup, SystemMessage } from './ui';
 import { getAudio } from '@/lib/audio';
 
@@ -199,6 +200,7 @@ export function InterrogationRoom() {
         center={<TopBarMessagesCounter remaining={session.messagesRemaining} total={MAX_MESSAGES} />}
         end={
           <>
+            <AudioControl />
             <Button
               variant="secondary"
               onClick={openDrawer}

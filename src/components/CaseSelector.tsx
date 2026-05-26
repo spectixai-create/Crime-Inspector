@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useGame } from '@/lib/gameState';
 import { CASES, CASE_ORDER } from '@/data/cases';
 import { AtmosphericBackground } from './AtmosphericBackground';
+import { AudioControl } from './AudioControl';
 import { getAudio } from '@/lib/audio';
 import { Badge, Button, Card } from './ui';
 
@@ -90,9 +91,12 @@ export function CaseSelector() {
         style={{
           display: 'flex',
           justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: 'var(--space-3)',
           padding: 'var(--space-5) var(--pad-desktop)',
         }}
       >
+        <AudioControl />
         <Button
           variant="ghost"
           size="md"
