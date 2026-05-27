@@ -75,7 +75,7 @@ export function CaseBrief() {
             </p>
           </div>
 
-          <div>
+          <div className="case-brief-details">
             <p className="section-header" style={{ marginBottom: 'var(--space-3)' }}>פרטי תיק</p>
             <Card surface="surface-2" padding="md">
               <dl
@@ -125,6 +125,7 @@ export function CaseBrief() {
 
           {/* Actions */}
           <div
+            className="case-brief-actions"
             style={{
               display: 'flex',
               gap: 'var(--space-3)',
@@ -149,7 +150,7 @@ export function CaseBrief() {
         </section>
 
         {/* End column — paper file */}
-        <aside>
+        <aside className="case-brief-dossier">
           <Card
             surface="paper"
             padding="lg"

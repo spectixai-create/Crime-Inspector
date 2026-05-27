@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 // Note: AudioControl is mounted inline per-screen (CaseSelector header, InterrogationRoom TopBar)
 // so it sits next to other chrome buttons instead of overlapping them.
@@ -6,6 +6,12 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'חוקר פלילי — חקירה',
   description: 'משחק חקירה משטרתית. תיק אחד. חשוד אחד. חקור. שקול. החלט.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -16,6 +22,13 @@ export default function RootLayout({
   return (
     <html dir="rtl" lang="he">
       <head>
+        {/* interactive-widget is not yet part of the Next.js Viewport typing —
+            add it directly so iOS/Android resize the layout when the virtual
+            keyboard opens. */}
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link

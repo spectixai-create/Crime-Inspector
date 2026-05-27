@@ -87,9 +87,11 @@ export const InputGroup = forwardRef<InputGroupHandle, InputGroupProps>(function
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', width: '100%' }}>
       <div
+        className="ir-composer"
         style={{
           display: 'grid',
           gridTemplateColumns: leadingSlot ? 'auto 1fr auto' : '1fr auto',
+          gridTemplateAreas: leadingSlot ? '"ig-leading ig-textarea ig-submit"' : '"ig-textarea ig-submit"',
           alignItems: 'stretch',
           gap: 'var(--space-3)',
           border: `1px solid ${focused ? 'var(--color-gold-primary)' : 'var(--color-border-strong)'}`,
@@ -99,9 +101,13 @@ export const InputGroup = forwardRef<InputGroupHandle, InputGroupProps>(function
           transition: 'border-color var(--motion-base) var(--motion-ease)',
         }}
       >
-        {leadingSlot && <div style={{ alignSelf: 'flex-end' }}>{leadingSlot}</div>}
+        {leadingSlot && (
+          <div className="ig-leading" style={{ gridArea: 'ig-leading', alignSelf: 'flex-end' }}>
+            {leadingSlot}
+          </div>
+        )}
 
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="ig-textarea-wrap" style={{ gridArea: 'ig-textarea', display: 'flex', flexDirection: 'column' }}>
           <label htmlFor={id} className="sr-only">{ariaLabel}</label>
           <textarea
             id={id}
@@ -134,7 +140,7 @@ export const InputGroup = forwardRef<InputGroupHandle, InputGroupProps>(function
           />
         </div>
 
-        <div style={{ alignSelf: 'flex-end' }}>
+        <div className="ig-submit" style={{ gridArea: 'ig-submit', alignSelf: 'flex-end' }}>
           <Button
             size="lg"
             variant="primary"

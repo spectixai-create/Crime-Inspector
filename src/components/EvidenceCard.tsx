@@ -103,6 +103,7 @@ export function EvidenceCard({ evidence, presented, staged }: Props) {
       </div>
 
       <div
+        className="evidence-actions"
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',

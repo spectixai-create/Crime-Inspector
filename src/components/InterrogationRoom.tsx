@@ -53,6 +53,7 @@ export function InterrogationRoom() {
   const [tooltipShown, setTooltipShown] = useState(false);
   const [evidenceFlash, setEvidenceFlash] = useState(false);
   const [pillFlash, setPillFlash] = useState(false);
+  const [suspectExpanded, setSuspectExpanded] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const prevSuspectState = useRef(session.suspectState);
@@ -185,6 +186,7 @@ export function InterrogationRoom() {
 
   return (
     <main
+      className="ir-shell"
       style={{
         height: '100vh',
         display: 'flex',
@@ -198,7 +200,9 @@ export function InterrogationRoom() {
         center={<TopBarMessagesCounter remaining={session.messagesRemaining} total={MAX_MESSAGES} />}
         end={
           <>
-            <AudioControl />
+            <span className="tb-mobile-hide" style={{ display: 'inline-flex' }}>
+              <AudioControl />
+            </span>
             <Button
               variant="secondary"
               onClick={openDrawer}
@@ -230,6 +234,7 @@ export function InterrogationRoom() {
                 style={{ borderStyle: 'dashed' }}
                 title="צא וחזור לבחירת תיק"
                 aria-label="אתחל את החקירה וחזור לבחירת תיק"
+                className="tb-mobile-hide"
               >
                 ↻ אתחול
               </Button>
@@ -271,9 +276,146 @@ export function InterrogationRoom() {
         }
       />
 
-      {/* ── MAIN — 60/40 split ──────────────────────────────── */}
+      {/* ── MAIN — 60/40 split (desktop) / column (mobile) ──── */}
       <div className="ir-main" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* Suspect column — RTL right = first in DOM (40%) */}
+        {/* ── Mobile-only compact suspect header (collapsible) ── */}
+        <aside
+          className="ir-suspect-mobile ir-suspect-expandable"
+          data-expanded={suspectExpanded}
+          style={{
+            display: 'none', // toggled to flex via mobile media query
+            width: '100%',
+            flexShrink: 0,
+            position: 'relative',
+            overflow: 'hidden',
+            background: 'var(--color-surface-1)',
+            borderBottom: '1px solid var(--color-border-subtle)',
+            transition: 'height var(--motion-base) var(--motion-ease)',
+          }}
+        >
+          {suspectExpanded ? (
+            <div
+              className="ir-suspect-portrait-full"
+              style={{ position: 'relative', width: '100%', height: 240, overflow: 'hidden' }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                key={`mob-${session.suspectState}`}
+                src={portraitSrc}
+                alt={`${c.suspect.name} — ${stateMeta.label}`}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'top center',
+                }}
+              />
+              <div className={`stress-frame stress-${session.suspectState} ${evidenceFlash ? 'evidence-flash' : ''}`} />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0, left: 0, right: 0,
+                  height: 140,
+                  background: 'linear-gradient(to top, var(--color-surface-1) 0%, transparent 100%)',
+                  pointerEvents: 'none',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0, left: 0, right: 0,
+                  padding: 'var(--space-4)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-end',
+                  gap: 'var(--space-3)',
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                  <p className="t-h3" style={{ margin: 0 }}>{c.suspect.name}</p>
+                  <Badge
+                    variant={stateMeta.variant}
+                    leading={<span className={stateMeta.pulse ? 'animate-pulse-dot' : ''} aria-hidden style={{
+                      width: 8, height: 8, borderRadius: 'var(--radius-pill)', background: 'currentColor', display: 'inline-block',
+                    }} />}
+                    aria-live="polite"
+                    className={pillFlash ? 'flash' : undefined}
+                  >
+                    מצב: {stateMeta.label}
+                  </Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSuspectExpanded(false)}
+                  aria-label="כווץ את הצגת החשוד"
+                >
+                  ▲ כווץ
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setSuspectExpanded(true)}
+              aria-label="הרחב להצגת החשוד"
+              aria-expanded="false"
+              style={{
+                width: '100%',
+                height: 80,
+                background: 'transparent',
+                border: 'none',
+                padding: 'var(--space-3) var(--space-4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-3)',
+                cursor: 'pointer',
+                color: 'var(--color-text-primary)',
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={portraitSrc}
+                alt=""
+                aria-hidden
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 'var(--radius-pill)',
+                  objectFit: 'cover',
+                  objectPosition: 'top center',
+                  flexShrink: 0,
+                  border: '1px solid var(--color-border-subtle)',
+                }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, flex: 1, textAlign: 'start' }}>
+                <span style={{ fontFamily: 'var(--font-title)', fontSize: 'var(--text-h4-size)', fontWeight: 500, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {c.suspect.name}
+                </span>
+                <Badge
+                  variant={stateMeta.variant}
+                  leading={<span className={stateMeta.pulse ? 'animate-pulse-dot' : ''} aria-hidden style={{
+                    width: 7, height: 7, borderRadius: 'var(--radius-pill)', background: 'currentColor', display: 'inline-block',
+                  }} />}
+                  aria-live="polite"
+                  className={pillFlash ? 'flash' : undefined}
+                >
+                  מצב: {stateMeta.label}
+                </Badge>
+              </div>
+              <span
+                aria-hidden
+                style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)', fontSize: 'var(--text-body-sm-size)' }}
+              >
+                ▼
+              </span>
+            </button>
+          )}
+        </aside>
+
+        {/* Desktop / tablet suspect column — full portrait */}
         <aside
           className="ir-suspect"
           style={{
@@ -372,9 +514,9 @@ export function InterrogationRoom() {
           {/* Scrollable messages */}
           <div
             ref={scrollRef}
+            className="chat-scroll"
             style={{
               flex: 1,
-              overflowY: 'auto',
               padding: 'var(--space-6) var(--space-8)',
             }}
           >
@@ -458,6 +600,7 @@ export function InterrogationRoom() {
 
           {/* ── Input area ────────────────────────────────── */}
           <div
+            className="ir-input-shell"
             style={{
               flexShrink: 0,
               background: 'var(--color-bg-main)',
@@ -544,14 +687,6 @@ export function InterrogationRoom() {
       <EvidenceDrawer />
       <EvidenceLightbox />
       <AssistantPanel />
-
-      <style>{`
-        @media (max-width: 1024px) {
-          .ir-main { flex-direction: column !important; }
-          .ir-suspect { width: 100% !important; height: 240px; }
-          .ir-chat { min-width: 0 !important; border-inline-start: none !important; border-top: 1px solid var(--color-border-subtle); }
-        }
-      `}</style>
     </main>
   );
 }

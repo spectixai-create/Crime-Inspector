@@ -97,14 +97,19 @@ export function Modal({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onKey]);
 
-  // Body scroll lock + focus management
+  // Body scroll lock with iOS-safe scroll position preserve/restore.
+  // Plain `overflow: hidden` doesn't stop iOS from bouncing the document
+  // behind a bottom sheet — using `position: fixed` on body does, but we
+  // must save and restore scrollY ourselves.
   useEffect(() => {
     if (!open) return;
     previouslyFocused.current = (document.activeElement as HTMLElement) ?? null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
 
-    // Focus first focusable inside dialog (microtask to wait for mount)
+    const scrollY = window.scrollY;
+    const body = document.body;
+    body.setAttribute('data-scroll-lock', 'true');
+    body.style.top = `-${scrollY}px`;
+
     const t = window.setTimeout(() => {
       const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
       focusables?.[0]?.focus();
@@ -112,7 +117,9 @@ export function Modal({
 
     return () => {
       window.clearTimeout(t);
-      document.body.style.overflow = prevOverflow;
+      body.removeAttribute('data-scroll-lock');
+      body.style.top = '';
+      window.scrollTo(0, scrollY);
       previouslyFocused.current?.focus?.();
     };
   }, [open]);
@@ -122,6 +129,7 @@ export function Modal({
 
   const node = (
     <div
+      className="modal-shell"
       role="presentation"
       onMouseDown={(e) => {
         if (closeOnBackdrop && e.target === e.currentTarget) onClose();
@@ -143,6 +151,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
+        className="modal-dialog"
         style={{
           width: '100%',
           maxWidth,
@@ -156,6 +165,20 @@ export function Modal({
           overflow: 'hidden',
         }}
       >
+        {/* Bottom-sheet drag-handle — only visible on mobile (CSS toggled) */}
+        <span
+          className="modal-drag-handle"
+          aria-hidden
+          style={{
+            display: 'none',
+            width: 40,
+            height: 4,
+            borderRadius: 'var(--radius-pill)',
+            background: 'var(--color-text-faint)',
+            margin: 'var(--space-3) auto var(--space-1)',
+            flexShrink: 0,
+          }}
+        />
         {(title || subtitle) && (
           <div
             style={{

@@ -121,6 +121,7 @@ export function EvidenceDrawer() {
 
       {/* Filter row */}
       <div
+        className="evidence-filters"
         style={{
           padding: 'var(--space-4) var(--space-8)',
           display: 'flex',

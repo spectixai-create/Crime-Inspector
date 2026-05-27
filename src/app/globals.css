@@ -179,6 +179,20 @@
   /* Back-compat */
   --ease-out: var(--motion-ease);
 
+  /* ── iOS / Android safe areas ───────────────────────────── */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-start:  env(safe-area-inset-left, 0px);
+  --safe-end:    env(safe-area-inset-right, 0px);
+
+  /* ── Breakpoints (documented only — CSS @media uses literals) ──
+     mobile-sm: <480px
+     mobile:    <768px
+     tablet:    768px–1023px
+     desktop:   ≥1024px
+     landscape-phone: max-height: 500px
+  */
+
   --grain-opacity: 0.03;
 }
 
@@ -195,7 +209,13 @@
 /* ══════════════════════════════════════════════════════════════
    BASE
    ══════════════════════════════════════════════════════════════ */
-html, body { min-height: 100vh; -webkit-font-smoothing: antialiased; }
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
 
 body {
   font-family: var(--font-ui);
@@ -205,6 +225,15 @@ body {
   color: var(--text-primary);
   background: var(--bg-deep);
   letter-spacing: 0;
+}
+
+/* Body-scroll-lock helper — used by Modal/EvidenceDrawer to lock background
+   while a sheet/modal is open. Preserve scrollY in JS, restore on close. */
+body[data-scroll-lock="true"] {
+  position: fixed;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  width: 100%;
 }
 
 /* Accessibility — visible focus ring on keyboard nav only */
@@ -845,3 +874,264 @@ body::before {
 .animate-stagger      { opacity: 0; animation: staggerFade 0.45s ease-out forwards; }
 .animate-blink        { animation: blink 1s ease-in-out infinite; }
 .animate-evidence-drop{ animation: evidenceDrop 0.3s ease-out both; }
+
+/* ══════════════════════════════════════════════════════════════
+   INTERROGATION SHELL — dvh override for mobile chrome resize
+   ══════════════════════════════════════════════════════════════ */
+.ir-shell { height: 100dvh; }
+
+/* ══════════════════════════════════════════════════════════════
+   CHAT SCROLL CONTAINER — internal scroll with iOS-friendly bounce
+   ══════════════════════════════════════════════════════════════ */
+.chat-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TOPBAR — safe-area aware
+   ══════════════════════════════════════════════════════════════ */
+.topbar {
+  /* Push content below the iOS notch when the app extends under it */
+  padding-top: var(--safe-top);
+  padding-inline-start: max(var(--space-8), var(--safe-start));
+  padding-inline-end:   max(var(--space-8), var(--safe-end));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TABLET OVERRIDES (768px – 1023px)
+   Single-column with a still-prominent 240px suspect band.
+   The new mobile compact header is hidden in this range.
+   ══════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ir-main { flex-direction: column !important; }
+  .ir-suspect { width: 100% !important; height: 240px; }
+  .ir-suspect-mobile { display: none !important; }
+  .ir-chat {
+    min-width: 0 !important;
+    border-inline-start: none !important;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE OVERRIDES (<768px)
+   Single-column layout. No horizontal scroll. Tappable targets ≥44px.
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  /* Body-level guard against horizontal overflow from any rogue child */
+  body { max-width: 100vw; }
+
+  /* TopBar becomes a 2-row stack: row 1 = case + decision, row 2 = counter + extras */
+  .topbar {
+    height: auto !important;
+    min-height: var(--topbar-height);
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-areas:
+      "tb-start  tb-end"
+      "tb-center tb-center" !important;
+    gap: var(--space-2) var(--space-3) !important;
+    padding: calc(var(--space-3) + var(--safe-top))
+             max(var(--space-4), var(--safe-end))
+             var(--space-3)
+             max(var(--space-4), var(--safe-start)) !important;
+  }
+  .topbar > :nth-child(1) { grid-area: tb-start; justify-content: flex-start !important; min-width: 0; }
+  .topbar > :nth-child(2) { grid-area: tb-center; justify-content: space-between !important; gap: var(--space-3); }
+  .topbar > :nth-child(3) {
+    grid-area: tb-end;
+    justify-content: flex-end !important;
+    flex-wrap: wrap;
+    gap: var(--space-2) !important;
+  }
+  /* Mobile end slot: hide non-essential controls (audio + reset) to leave
+     room for the decision + evidence buttons. Reset stays available on the
+     CaseSelector home screen, audio mute persists from previous session. */
+  .topbar .tb-mobile-hide { display: none !important; }
+  /* Make remaining buttons compact */
+  .topbar > :nth-child(3) > .btn {
+    min-height: 36px !important;
+    padding: 0 var(--space-3) !important;
+    font-size: var(--text-body-sm-size) !important;
+  }
+
+  /* Case identity: shrink + truncate title */
+  .topbar .topbar-case-title {
+    font-size: var(--text-h4-size) !important;
+    line-height: 1.2 !important;
+    max-width: 60vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* InterrogationRoom: column flow with compact suspect header */
+  .ir-main {
+    flex-direction: column !important;
+  }
+  .ir-suspect {
+    /* Hide the full desktop suspect column entirely on mobile */
+    display: none !important;
+  }
+  .ir-suspect-mobile {
+    display: flex !important;
+  }
+  .ir-chat {
+    min-width: 0 !important;
+    border-inline-start: none !important;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  /* Chat scroll inner — tighter padding for mobile */
+  .ir-chat .chat-scroll {
+    padding: var(--space-4) !important;
+  }
+  .ir-chat .chat-scroll .chat-bubble {
+    max-width: 92% !important;
+  }
+  .ir-chat .chat-scroll .chat-bubble--suspect {
+    max-width: 94% !important;
+  }
+
+  /* Input area: mobile padding + safe bottom */
+  .ir-input-shell {
+    padding: var(--space-3) var(--space-4)
+             calc(var(--space-3) + var(--safe-bottom))
+             var(--space-4) !important;
+  }
+
+  /* Composer reflow on mobile:
+     row 1 = textarea (full width)
+     row 2 = [leading slot | submit] each ½ width */
+  .ir-composer {
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-areas:
+      "ig-textarea ig-textarea"
+      "ig-leading  ig-submit" !important;
+    gap: var(--space-2) !important;
+  }
+  .ir-composer .ig-leading,
+  .ir-composer .ig-submit { align-self: stretch; }
+  .ir-composer .ig-leading > *,
+  .ir-composer .ig-submit > * { width: 100%; }
+
+  /* Evidence card actions stack full-width on mobile */
+  .evidence-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Evidence drawer filter row: smaller, ellipsis */
+  .evidence-filters .btn {
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* CaseBrief: stack columns, dossier last + no rotation */
+  .case-brief-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-6) !important;
+  }
+  .case-brief-dossier {
+    order: 99;
+  }
+  .case-brief-dossier > [class] {
+    transform: none !important;          /* kill the desktop -1deg tilt */
+    box-shadow: var(--shadow-card) !important;
+    max-width: 92vw;
+    margin-inline: auto;
+  }
+
+  /* CaseBrief details: ensure single-column dt/dd vertical stack */
+  .case-brief-details dl {
+    grid-template-columns: 1fr !important;
+  }
+  .case-brief-details dt {
+    padding-block-end: 0 !important;
+    border-bottom: none !important;
+  }
+  .case-brief-details dd {
+    padding-block-start: 2px !important;
+  }
+
+  /* CaseBrief actions: full-width 52px stacked CTAs */
+  .case-brief-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .case-brief-actions .btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  /* Case selector: tighten + full-width primary */
+  .case-card-inner {
+    padding: var(--space-5) !important;
+    min-height: 0 !important;
+  }
+  .case-card-inner .case-cta { width: 100%; justify-content: center; }
+
+  /* Brand title smaller on mobile */
+  .hero-title {
+    font-size: 2.5rem !important;
+    line-height: 1.1 !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SMALL MOBILE (<480px) — extra tightening
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 479px) {
+  .topbar .topbar-case-title { max-width: 48vw; }
+  .ir-composer {
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "ig-textarea"
+      "ig-submit"
+      "ig-leading" !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LANDSCAPE PHONE (height <500px) — keep compact, no expansion
+   ══════════════════════════════════════════════════════════════ */
+@media (max-height: 500px) {
+  .ir-suspect-expandable[data-expanded="true"] {
+    /* Locked compact regardless of state */
+    height: 64px !important;
+    max-height: 64px !important;
+  }
+  .ir-suspect-expandable .ir-suspect-portrait-full {
+    display: none !important;
+  }
+  .topbar .topbar-case-title { max-width: 36vw; font-size: var(--text-body-sm-size) !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL → BOTTOM SHEET on mobile (<768px)
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .modal-shell {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .modal-shell .modal-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90dvh !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    padding-block-end: var(--safe-bottom) !important;
+    animation: sheetIn var(--motion-slow) var(--motion-ease) !important;
+  }
+  .modal-shell .modal-drag-handle {
+    display: block !important;
+  }
+}
+
+@keyframes sheetIn {
+  from { transform: translateY(100%); opacity: 0.4; }
+  to   { transform: translateY(0);    opacity: 1; }
+}

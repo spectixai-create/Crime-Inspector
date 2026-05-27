@@ -66,6 +66,7 @@ export function TopBarCaseIdentity({ caseNum, title }: { caseNum: string; title:
         תיק {caseNum}
       </span>
       <span
+        className="topbar-case-title"
         style={{
           fontFamily: 'var(--font-display)',
           fontSize: 'var(--fs-h3)',
