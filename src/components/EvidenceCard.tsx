@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { Evidence } from '@/lib/types';
 import { useGame } from '@/lib/gameState';
 import { Badge, Button, Card } from './ui';
@@ -21,11 +22,14 @@ const CATEGORY_LABELS: Record<Evidence['type'], string> = {
 export function EvidenceCard({ evidence, presented, staged }: Props) {
   const stageEvidence = useGame((s) => s.stageEvidence);
   const openLightbox = useGame((s) => s.openLightbox);
+  const [imgError, setImgError] = useState(false);
 
   const handlePresent = () => {
     if (presented) return;
     stageEvidence(staged ? null : evidence.id);
   };
+
+  const categoryLabel = CATEGORY_LABELS[evidence.type] ?? evidence.type;
 
   return (
     <Card
@@ -40,34 +44,29 @@ export function EvidenceCard({ evidence, presented, staged }: Props) {
       }}
       aria-label={`ראיה: ${evidence.label}`}
     >
-      {/* Image — click anywhere on it to inspect */}
+      {/* Image area — falls back to a labeled placeholder if the file fails */}
       <button
         onClick={() => openLightbox(evidence.id)}
         aria-label={`פתח לבדיקה: ${evidence.label}`}
         type="button"
-        style={{
-          position: 'relative',
-          aspectRatio: '4 / 3',
-          width: '100%',
-          padding: 0,
-          border: 'none',
-          background: 'var(--color-bg-main)',
-          cursor: 'zoom-in',
-          overflow: 'hidden',
-        }}
+        className="evidence-image-container"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={evidence.imageAsset}
-          alt={evidence.label}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            display: 'block',
-            transition: 'transform var(--motion-slow) var(--motion-ease)',
-          }}
-        />
+        {!imgError ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={evidence.imageAsset}
+            alt={evidence.label}
+            loading="lazy"
+            onError={() => setImgError(true)}
+            className="evidence-img"
+          />
+        ) : (
+          <div className="evidence-img-fallback" role="img" aria-label={`תמונה לא זמינה: ${evidence.label}`}>
+            <span className="fallback-icon" aria-hidden>⊟</span>
+            <span className="fallback-text">תמונה לא זמינה</span>
+            <span className="fallback-cat">{categoryLabel}</span>
+          </div>
+        )}
       </button>
 
       <div
@@ -81,23 +80,17 @@ export function EvidenceCard({ evidence, presented, staged }: Props) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-3)' }}>
           <Badge variant="neutral" mono>
-            {CATEGORY_LABELS[evidence.type] ?? evidence.type} · {evidence.id}
+            {categoryLabel} · {evidence.id}
           </Badge>
           <Badge variant={presented ? 'gold' : 'neutral'}>
             {presented ? 'הוצג' : 'לא הוצג'}
           </Badge>
         </div>
 
-        <h3
-          className="t-h3"
-          style={{ margin: 0 }}
-        >
+        <h3 className="t-h3 evidence-title-text" style={{ margin: 0 }}>
           {evidence.label}
         </h3>
-        <p
-          className="t-body-sm"
-          style={{ margin: 0 }}
-        >
+        <p className="t-body-sm evidence-desc-text" style={{ margin: 0 }}>
           {evidence.description}
         </p>
       </div>

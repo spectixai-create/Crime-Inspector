@@ -20,7 +20,8 @@ const EVIDENCE_QUALITY_LABELS: Record<
 export function ResultScreen() {
   const session = useGame((s) => s.session)!;
   const c = getCase(session.caseId);
-  const reset = useGame((s) => s.reset);
+  const restartCurrentCase = useGame((s) => s.restartCurrentCase);
+  const returnToCaseSelection = useGame((s) => s.returnToCaseSelection);
   const result = session.result;
   const caseNum = c.id.replace('case-', '');
 
@@ -341,6 +342,7 @@ export function ResultScreen() {
 
         {/* Actions */}
         <div
+          className="case-brief-actions"
           style={{
             marginTop: 'var(--space-10)',
             display: 'flex',
@@ -349,8 +351,8 @@ export function ResultScreen() {
             flexWrap: 'wrap',
           }}
         >
-          <Button variant="primary" onClick={reset}>שחק תיק נוסף ←</Button>
-          <Button variant="ghost" onClick={reset}>חזרה לבחירת תיקים</Button>
+          <Button variant="primary" onClick={restartCurrentCase}>שחק שוב ←</Button>
+          <Button variant="ghost" onClick={returnToCaseSelection}>בחירת תיקים</Button>
         </div>
 
         <style>{`

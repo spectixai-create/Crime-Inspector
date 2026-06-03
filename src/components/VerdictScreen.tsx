@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useGame } from '@/lib/gameState';
 import { getCase } from '@/data/cases';
 import { getAudio } from '@/lib/audio';
-import { Badge, Button, Card } from './ui';
+import { Badge, Button, Card, ConfirmDialog } from './ui';
 
 const MIN_JUSTIFICATION = 80;
 
@@ -12,18 +12,19 @@ export function VerdictScreen() {
   const session = useGame((s) => s.session)!;
   const c = getCase(session.caseId);
   const submitVerdict = useGame((s) => s.submitVerdict);
-  const reset = useGame((s) => s.reset);
+  const returnToCaseSelection = useGame((s) => s.returnToCaseSelection);
   const isLoading = useGame((s) => s.isLoading);
 
   const [decision, setDecision] = useState<'release' | 'charge' | null>(null);
   const [justification, setJustification] = useState('');
   const [cited, setCited] = useState<string[]>([]);
+  const [abortConfirmOpen, setAbortConfirmOpen] = useState(false);
   const caseNum = c.id.replace('case-', '');
 
-  const handleAbort = () => {
-    if (window.confirm('לבטל את הגשת ההחלטה ולחזור לבחירת תיק? כל ההתקדמות תאבד.')) {
-      reset();
-    }
+  const handleAbort = () => setAbortConfirmOpen(true);
+  const confirmAbort = () => {
+    setAbortConfirmOpen(false);
+    returnToCaseSelection();
   };
 
   const justOk = justification.trim().length >= MIN_JUSTIFICATION;
@@ -311,6 +312,15 @@ export function VerdictScreen() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={abortConfirmOpen}
+        title="לחזור לבחירת תיקים?"
+        message="הגשת ההחלטה תבוטל וההתקדמות בתיק הנוכחי תימחק."
+        confirmLabel="חזור לבחירת תיקים"
+        onCancel={() => setAbortConfirmOpen(false)}
+        onConfirm={confirmAbort}
+      />
     </main>
   );
 }

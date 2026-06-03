@@ -10,7 +10,7 @@ import { EvidenceLightbox } from './EvidenceLightbox';
 import { AssistantPanel } from './AssistantPanel';
 import { TopBar, TopBarCaseIdentity, TopBarMessagesCounter } from './TopBar';
 import { AudioControl } from './AudioControl';
-import { Badge, Button, InputGroup, SystemMessage } from './ui';
+import { Badge, Button, ConfirmDialog, InputGroup, Modal, SystemMessage } from './ui';
 import { getAudio } from '@/lib/audio';
 
 type StateBadgeVariant = 'neutral' | 'gold' | 'danger';
@@ -41,7 +41,8 @@ export function InterrogationRoom() {
   const openDrawer = useGame((s) => s.openDrawer);
   const goToVerdict = useGame((s) => s.goToVerdict);
   const stageEvidence = useGame((s) => s.stageEvidence);
-  const reset = useGame((s) => s.reset);
+  const returnToCaseSelection = useGame((s) => s.returnToCaseSelection);
+  const restartCurrentCase = useGame((s) => s.restartCurrentCase);
   const openLightbox = useGame((s) => s.openLightbox);
 
   const text = useGame((s) => s.inputDraft);
@@ -54,6 +55,9 @@ export function InterrogationRoom() {
   const [evidenceFlash, setEvidenceFlash] = useState(false);
   const [pillFlash, setPillFlash] = useState(false);
   const [suspectExpanded, setSuspectExpanded] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [restartConfirmOpen, setRestartConfirmOpen] = useState(false);
+  const [returnConfirmOpen, setReturnConfirmOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const prevSuspectState = useRef(session.suspectState);
@@ -159,11 +163,31 @@ export function InterrogationRoom() {
     goToVerdict();
   };
 
-  const handleDevReset = () => {
-    if (window.confirm('לאפס את החקירה? כל ההתקדמות תאבד.')) {
-      reset();
-      window.location.reload();
-    }
+  // Navigation actions — both gated by a ConfirmDialog (no browser confirm).
+  const handleRestart = () => {
+    setActionsOpen(false);
+    setRestartConfirmOpen(true);
+  };
+  const handleReturn = () => {
+    setActionsOpen(false);
+    setReturnConfirmOpen(true);
+  };
+  const confirmRestart = () => {
+    setRestartConfirmOpen(false);
+    restartCurrentCase();
+  };
+  const confirmReturn = () => {
+    setReturnConfirmOpen(false);
+    returnToCaseSelection();
+  };
+
+  const openEvidenceFromMenu = () => {
+    setActionsOpen(false);
+    openDrawer();
+  };
+  const openVerdictFromMenu = () => {
+    setActionsOpen(false);
+    handleVerdictClick();
   };
 
   const stateMeta = STATE_META[session.suspectState];
@@ -200,6 +224,8 @@ export function InterrogationRoom() {
         center={<TopBarMessagesCounter remaining={session.messagesRemaining} total={MAX_MESSAGES} />}
         end={
           <>
+            {/* Audio + decision/evidence are visible on desktop; on mobile
+                they're hidden in favour of the single "פעולות" trigger. */}
             <span className="tb-mobile-hide" style={{ display: 'inline-flex' }}>
               <AudioControl />
             </span>
@@ -208,6 +234,7 @@ export function InterrogationRoom() {
               onClick={openDrawer}
               aria-label="פתח את תיק הראיות"
               title="תיק ראיות (Ctrl+E)"
+              className="tb-mobile-hide"
               leadingIcon={<span aria-hidden>⊟</span>}
               trailingIcon={
                 <span
@@ -226,21 +253,7 @@ export function InterrogationRoom() {
               תיק ראיות
             </Button>
 
-            {session.messages.length > 0 && (
-              <Button
-                variant="ghost"
-                size="md"
-                onClick={handleDevReset}
-                style={{ borderStyle: 'dashed' }}
-                title="צא וחזור לבחירת תיק"
-                aria-label="אתחל את החקירה וחזור לבחירת תיק"
-                className="tb-mobile-hide"
-              >
-                ↻ אתחול
-              </Button>
-            )}
-
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative' }} className="tb-mobile-hide">
               <Button
                 variant="danger"
                 size="md"
@@ -272,6 +285,18 @@ export function InterrogationRoom() {
                 </div>
               )}
             </div>
+
+            {/* Mobile-only: single trigger that opens the actions sheet */}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setActionsOpen(true)}
+              aria-label="פעולות תיק"
+              className="tb-mobile-only"
+              leadingIcon={<span aria-hidden>⋯</span>}
+            >
+              פעולות
+            </Button>
           </>
         }
       />
@@ -687,6 +712,85 @@ export function InterrogationRoom() {
       <EvidenceDrawer />
       <EvidenceLightbox />
       <AssistantPanel />
+
+      {/* Mobile / always-available actions menu */}
+      <Modal
+        open={actionsOpen}
+        onClose={() => setActionsOpen(false)}
+        ariaLabel="פעולות תיק"
+        title="פעולות תיק"
+        subtitle={`תיק ${caseNum} — ${c.title}`}
+        maxWidth={420}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          <Button
+            variant="secondary"
+            width="full"
+            size="lg"
+            onClick={openEvidenceFromMenu}
+            leadingIcon={<span aria-hidden>⊟</span>}
+            trailingIcon={
+              <span
+                style={{
+                  background: 'var(--color-gold-glow)',
+                  color: 'var(--color-gold-primary)',
+                  padding: '2px var(--space-2)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 'var(--text-caption-size)',
+                }}
+              >
+                {session.evidencePresented.length}/{c.evidence.length}
+              </span>
+            }
+          >
+            תיק ראיות
+          </Button>
+          <Button
+            variant={verdictUnlocked ? 'danger' : 'ghost'}
+            width="full"
+            size="lg"
+            onClick={openVerdictFromMenu}
+            disabled={!verdictUnlocked}
+            title={verdictUnlocked ? 'הגש החלטה סופית' : 'חקור את החשוד לפחות 3 פעמים'}
+          >
+            הגש החלטה
+          </Button>
+          <Button
+            variant="ghost"
+            width="full"
+            size="lg"
+            onClick={handleRestart}
+            disabled={session.messages.length === 0}
+          >
+            ↻ אתחל תיק
+          </Button>
+          <Button
+            variant="ghost"
+            width="full"
+            size="lg"
+            onClick={handleReturn}
+          >
+            ← בחירת תיקים
+          </Button>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={restartConfirmOpen}
+        title="לאתחל את התיק?"
+        message="כל ההתקדמות בתיק הנוכחי תימחק. הראיות יחזרו למצבן ההתחלתי."
+        confirmLabel="אתחל תיק"
+        onCancel={() => setRestartConfirmOpen(false)}
+        onConfirm={confirmRestart}
+      />
+      <ConfirmDialog
+        open={returnConfirmOpen}
+        title="לחזור לבחירת תיקים?"
+        message="ההתקדמות בתיק הנוכחי תימחק. תוכל לבחור תיק אחר או לשחק את אותו תיק שוב."
+        confirmLabel="חזור לבחירת תיקים"
+        onCancel={() => setReturnConfirmOpen(false)}
+        onConfirm={confirmReturn}
+      />
     </main>
   );
 }

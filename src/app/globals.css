@@ -881,6 +881,56 @@ body::before {
 .ir-shell { height: 100dvh; }
 
 /* ══════════════════════════════════════════════════════════════
+   EVIDENCE IMAGE — fallback when the file fails to load
+   ══════════════════════════════════════════════════════════════ */
+.evidence-image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--color-bg-main);
+  overflow: hidden;
+  border: none;
+  padding: 0;
+  cursor: zoom-in;
+  display: block;
+}
+.evidence-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--motion-slow) var(--motion-ease);
+}
+.evidence-image-container:hover .evidence-img { transform: scale(1.04); }
+
+.evidence-img-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+.fallback-icon { font-size: 2rem; opacity: 0.5; }
+.fallback-text { font-size: var(--text-body-sm-size); }
+.fallback-cat {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption-size);
+  color: var(--color-text-faint);
+}
+
+/* Evidence description line-clamp (mobile-tight readable card) */
+.evidence-desc-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════════════════════
    CHAT SCROLL CONTAINER — internal scroll with iOS-friendly bounce
    ══════════════════════════════════════════════════════════════ */
 .chat-scroll {
@@ -898,6 +948,9 @@ body::before {
   padding-inline-start: max(var(--space-8), var(--safe-start));
   padding-inline-end:   max(var(--space-8), var(--safe-end));
 }
+
+/* Mobile-only utility — hidden by default; mobile media query reveals it */
+.tb-mobile-only { display: none; }
 
 /* ══════════════════════════════════════════════════════════════
    TABLET OVERRIDES (768px – 1023px)
@@ -946,10 +999,23 @@ body::before {
     flex-wrap: wrap;
     gap: var(--space-2) !important;
   }
-  /* Mobile end slot: hide non-essential controls (audio + reset) to leave
-     room for the decision + evidence buttons. Reset stays available on the
-     CaseSelector home screen, audio mute persists from previous session. */
+  /* Mobile end slot: hide the desktop chrome (audio + evidence + decision)
+     and show the single "פעולות" trigger that opens the actions sheet. */
   .topbar .tb-mobile-hide { display: none !important; }
+  .topbar .tb-mobile-only { display: inline-flex !important; }
+
+  /* Evidence drawer filters become a horizontal-scroll chip row on mobile */
+  .evidence-filters {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--space-3) var(--space-4) !important;
+  }
+  .evidence-filters .btn {
+    flex-shrink: 0;
+    max-width: none;
+  }
   /* Make remaining buttons compact */
   .topbar > :nth-child(3) > .btn {
     min-height: 36px !important;
@@ -1001,6 +1067,14 @@ body::before {
              calc(var(--space-3) + var(--safe-bottom))
              var(--space-4) !important;
   }
+
+  /* Mobile chat: bigger suggestion chips (48px) for thumb-friendly taps */
+  .ir-chat .btn[width="full"],
+  .ir-chat .chat-scroll .btn { min-height: 48px; }
+
+  /* Hide desktop keyboard hint on mobile (chips + visible send button are
+     enough — the hint adds noise on small screens) */
+  .ir-composer + div { display: none; }
 
   /* Composer reflow on mobile:
      row 1 = textarea (full width)

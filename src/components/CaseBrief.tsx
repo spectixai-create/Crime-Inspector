@@ -15,7 +15,7 @@ const BG_MAP: Record<string, string> = {
 
 export function CaseBrief() {
   const enterInterrogation = useGame((s) => s.enterInterrogation);
-  const reset = useGame((s) => s.reset);
+  const returnToCaseSelection = useGame((s) => s.returnToCaseSelection);
   const session = useGame((s) => s.session);
   const c = getCase(session?.caseId);
   const caseNum = c.id.replace('case-', '');
@@ -143,7 +143,7 @@ export function CaseBrief() {
             >
               היכנס לחדר החקירות ←
             </Button>
-            <Button variant="ghost" onClick={reset}>
+            <Button variant="ghost" onClick={returnToCaseSelection}>
               ← חזרה לבחירת תיק
             </Button>
           </div>

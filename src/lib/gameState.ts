@@ -42,6 +42,10 @@ interface GameStore {
   closeAssistant: () => void;
   fillFromSuggestion: (text: string) => void;
   setInputDraft: (text: string) => void;
+  /** Discard the current session and return to the case selector. */
+  returnToCaseSelection: () => void;
+  /** Wipe progress on the current case and restart it from the briefing screen. */
+  restartCurrentCase: () => void;
   reset: () => void;
 }
 
@@ -325,6 +329,27 @@ export const useGame = create<GameStore>()(
         }),
 
       setInputDraft: (text) => set({ inputDraft: text }),
+
+      returnToCaseSelection: () =>
+        set({
+          session: null,
+          drawerOpen: false,
+          lightboxEvidenceId: null,
+          assistantOpen: false,
+          assistantLoading: false,
+          assistantError: null,
+          assistantSuggestions: [],
+          inputDraft: '',
+          isLoading: false,
+          // completedCases intentionally preserved
+        }),
+
+      restartCurrentCase: () => {
+        const s = get().session;
+        if (!s) return;
+        // startCase rebuilds a fresh session and resets all transient UI state.
+        get().startCase(s.caseId);
+      },
 
       reset: () =>
         set({

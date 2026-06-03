@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { useGame } from '@/lib/gameState';
 import { getCase } from '@/data/cases';
@@ -26,6 +27,9 @@ export function EvidenceLightbox() {
 
   const presented = !!(evidence && session?.evidencePresented?.includes(evidence.id));
   const staged = !!(evidence && session?.stagedEvidence === evidence.id);
+  const [imgError, setImgError] = useState(false);
+  // Reset error state when switching to a different evidence
+  useEffect(() => { setImgError(false); }, [evidence?.id]);
 
   const handlePresent = () => {
     if (!evidence || presented) return;
@@ -78,35 +82,49 @@ export function EvidenceLightbox() {
               maxHeight: '60vh',
             }}
           >
-            <TransformWrapper
-              minScale={1}
-              maxScale={5}
-              initialScale={1}
-              centerOnInit
-              doubleClick={{ mode: 'toggle', step: 1.5 }}
-              wheel={{ step: 0.15 }}
-              pinch={{ step: 5 }}
-              panning={{ velocityDisabled: true }}
-            >
-              <TransformComponent
-                wrapperStyle={{ width: '100%', height: '60vh', minHeight: 360 }}
-                contentStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
+            {imgError ? (
+              <div
+                className="evidence-img-fallback"
+                role="img"
+                aria-label={`תמונה לא זמינה: ${evidence.label}`}
+                style={{ width: '100%', minHeight: 360, height: '60vh' }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={evidence.imageAsset}
-                  alt={evidence.label}
-                  style={{
-                    maxHeight: '60vh',
-                    maxWidth: '100%',
-                    objectFit: 'contain',
-                    userSelect: 'none',
-                    display: 'block',
-                  }}
-                  draggable={false}
-                />
-              </TransformComponent>
-            </TransformWrapper>
+                <span className="fallback-icon" aria-hidden>⊟</span>
+                <span className="fallback-text">תמונה לא זמינה</span>
+                <span className="fallback-cat">{CATEGORY_LABELS[evidence.type] ?? evidence.type}</span>
+              </div>
+            ) : (
+              <TransformWrapper
+                minScale={1}
+                maxScale={5}
+                initialScale={1}
+                centerOnInit
+                doubleClick={{ mode: 'toggle', step: 1.5 }}
+                wheel={{ step: 0.15 }}
+                pinch={{ step: 5 }}
+                panning={{ velocityDisabled: true }}
+              >
+                <TransformComponent
+                  wrapperStyle={{ width: '100%', height: '60vh', minHeight: 360 }}
+                  contentStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={evidence.imageAsset}
+                    alt={evidence.label}
+                    onError={() => setImgError(true)}
+                    style={{
+                      maxHeight: '60vh',
+                      maxWidth: '100%',
+                      objectFit: 'contain',
+                      userSelect: 'none',
+                      display: 'block',
+                    }}
+                    draggable={false}
+                  />
+                </TransformComponent>
+              </TransformWrapper>
+            )}
           </div>
 
           <p
