@@ -73,13 +73,15 @@ export function EvidenceLightbox() {
       {evidence && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div
+            className="lightbox-stage"
             style={{
+              position: 'relative',
               background: 'var(--color-bg-main)',
               border: '1px solid var(--color-border-subtle)',
               borderRadius: 'var(--radius-md)',
               overflow: 'hidden',
-              minHeight: 360,
-              maxHeight: '60vh',
+              height: 'min(68vh, 640px)',
+              width: '100%',
             }}
           >
             {imgError ? (
@@ -87,7 +89,7 @@ export function EvidenceLightbox() {
                 className="evidence-img-fallback"
                 role="img"
                 aria-label={`תמונה לא זמינה: ${evidence.label}`}
-                style={{ width: '100%', minHeight: 360, height: '60vh' }}
+                style={{ width: '100%', height: '100%' }}
               >
                 <span className="fallback-icon" aria-hidden>⊟</span>
                 <span className="fallback-text">תמונה לא זמינה</span>
@@ -96,33 +98,88 @@ export function EvidenceLightbox() {
             ) : (
               <TransformWrapper
                 minScale={1}
-                maxScale={5}
+                maxScale={6}
                 initialScale={1}
                 centerOnInit
-                doubleClick={{ mode: 'toggle', step: 1.5 }}
-                wheel={{ step: 0.15 }}
+                doubleClick={{ mode: 'toggle', step: 2 }}
+                wheel={{ step: 0.2 }}
                 pinch={{ step: 5 }}
                 panning={{ velocityDisabled: true }}
               >
-                <TransformComponent
-                  wrapperStyle={{ width: '100%', height: '60vh', minHeight: 360 }}
-                  contentStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={evidence.imageAsset}
-                    alt={evidence.label}
-                    onError={() => setImgError(true)}
-                    style={{
-                      maxHeight: '60vh',
-                      maxWidth: '100%',
-                      objectFit: 'contain',
-                      userSelect: 'none',
-                      display: 'block',
-                    }}
-                    draggable={false}
-                  />
-                </TransformComponent>
+                {({ zoomIn, zoomOut, resetTransform }) => (
+                  <>
+                    <TransformComponent
+                      wrapperStyle={{ width: '100%', height: '100%' }}
+                      contentStyle={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={evidence.imageAsset}
+                        alt={evidence.label}
+                        onError={() => setImgError(true)}
+                        style={{
+                          maxHeight: '100%',
+                          maxWidth: '100%',
+                          objectFit: 'contain',
+                          userSelect: 'none',
+                          display: 'block',
+                        }}
+                        draggable={false}
+                      />
+                    </TransformComponent>
+
+                    {/* Floating zoom toolbar — bottom-center, direction-neutral */}
+                    <div
+                      className="lightbox-zoom-bar"
+                      style={{
+                        position: 'absolute',
+                        bottom: 'var(--space-4)',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-1)',
+                        background: 'rgba(7, 9, 13, 0.85)',
+                        border: '1px solid var(--color-border-subtle)',
+                        borderRadius: 'var(--radius-pill)',
+                        padding: 'var(--space-1)',
+                        backdropFilter: 'blur(6px)',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => zoomOut()}
+                        aria-label="הקטן"
+                        className="lightbox-zoom-btn"
+                      >
+                        −
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => resetTransform()}
+                        aria-label="אפס תצוגה"
+                        className="lightbox-zoom-btn"
+                        style={{ fontSize: 'var(--text-body-sm-size)', width: 'auto', padding: '0 var(--space-3)' }}
+                      >
+                        אפס
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => zoomIn()}
+                        aria-label="הגדל"
+                        className="lightbox-zoom-btn"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </>
+                )}
               </TransformWrapper>
             )}
           </div>
@@ -138,7 +195,7 @@ export function EvidenceLightbox() {
             className="t-caption"
             style={{ margin: 0, textAlign: 'center' }}
           >
-            גלגל עכבר להגדלה · גרירה להזזה · ESC לסגירה
+            גלגל עכבר או כפתורי + / − להגדלה · גרירה להזזה · ESC לסגירה
           </p>
         </div>
       )}

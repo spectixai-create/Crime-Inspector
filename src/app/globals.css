@@ -930,6 +930,27 @@ body::before {
   overflow: hidden;
 }
 
+/* Lightbox floating zoom toolbar buttons */
+.lightbox-zoom-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: var(--text-h3-size);
+  font-family: var(--font-ui);
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+.lightbox-zoom-btn:hover { background: var(--color-gold-glow); color: var(--color-gold-primary); }
+.lightbox-zoom-btn:active { transform: scale(0.94); }
+
 /* ══════════════════════════════════════════════════════════════
    CHAT SCROLL CONTAINER — internal scroll with iOS-friendly bounce
    ══════════════════════════════════════════════════════════════ */
