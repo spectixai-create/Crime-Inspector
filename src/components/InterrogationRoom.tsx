@@ -286,13 +286,16 @@ export function InterrogationRoom() {
               )}
             </div>
 
-            {/* Mobile-only: single trigger that opens the actions sheet */}
+            {/* Actions trigger — shown on every viewport. On desktop it sits
+                next to the inline buttons and is the home for restart /
+                return-to-selection (which have no inline desktop button).
+                On mobile the inline buttons are hidden and this is the only
+                control. */}
             <Button
               variant="secondary"
               size="sm"
               onClick={() => setActionsOpen(true)}
               aria-label="פעולות תיק"
-              className="tb-mobile-only"
               leadingIcon={<span aria-hidden>⋯</span>}
             >
               פעולות
@@ -760,7 +763,6 @@ export function InterrogationRoom() {
             width="full"
             size="lg"
             onClick={handleRestart}
-            disabled={session.messages.length === 0}
           >
             ↻ אתחל תיק
           </Button>
