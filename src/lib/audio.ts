@@ -45,6 +45,9 @@ class AudioEngine {
   private masterVolume: number = 0.6;
   private tensionTarget: number = 0;
   private ready: boolean = false;
+  // Track what was playing when the tab was backgrounded, so we can resume it.
+  private wasAmbientPlaying: boolean = false;
+  private wasTensionPlaying: boolean = false;
 
   constructor() {
     if (typeof window === 'undefined') return;
@@ -85,7 +88,37 @@ class AudioEngine {
     });
 
     this.ready = true;
+
+    // Pause all music when the tab/page is hidden (switched away, minimized,
+    // phone locked, PWA backgrounded) and resume it when it returns to the
+    // foreground. Without this, the html5 loop keeps playing "in the dark".
+    document.addEventListener('visibilitychange', this.handleVisibility);
+    // Also halt on hard unload (belt-and-suspenders for some mobile browsers).
+    window.addEventListener('pagehide', this.handleHidden);
   }
+
+  private handleVisibility = () => {
+    if (document.visibilityState === 'hidden') this.handleHidden();
+    else this.handleVisible();
+  };
+
+  private handleHidden = () => {
+    if (!this.ready) return;
+    this.wasAmbientPlaying = !!this.ambient?.playing();
+    this.wasTensionPlaying = !!this.tension?.playing();
+    this.ambient?.pause();
+    this.tension?.pause();
+  };
+
+  private handleVisible = () => {
+    if (!this.ready || this.muted) return;
+    if (this.wasAmbientPlaying && this.ambient && !this.ambient.playing()) {
+      try { this.ambient.play(); } catch { /* autoplay may require a gesture */ }
+    }
+    if (this.wasTensionPlaying && this.tension && !this.tension.playing()) {
+      try { this.tension.play(); } catch { /* ignore */ }
+    }
+  };
 
   /** Plays just the ambient base loop. Safe to call repeatedly — idempotent. */
   startAmbient() {
